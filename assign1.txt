@@ -1,0 +1,154 @@
+
+CREATE TABLE client_master(
+    client_no VARCHAR2(6),
+    name VARCHAR2(20) NOT NULL,
+    address1 VARCHAR2(30),
+    address2 VARCHAR2(30),
+    city VARCHAR2(15),
+    state VARCHAR2(15),
+    pincode NUMBER(6),
+    bal_due NUMBER(10,2),
+    CONSTRAINT client_no_pk PRIMARY KEY(client_no), 
+    CONSTRAINT client_no_ck CHECK (client_no LIKE 'C%')
+);
+
+CREATE TABLE product_master(
+    product_no VARCHAR2(6),
+    description VARCHAR2(50) NOT NULL,
+    profit_percent NUMBER(3,2) NOT NULL,
+    unit_measure VARCHAR2(10) NOT NULL,
+    record_lvl NUMBER(8) NOT NULL,
+    sell_price NUMBER(8,2) NOT NULL,
+    cost_price NUMBER(8,2) NOT NULL,
+    CONSTRAINT product_no_pk PRIMARY KEY(product_no), 
+    CONSTRAINT product_no_ck CHECK (product_no LIKE 'P%'),
+    CONSTRAINT sell_price_ck CHECK (sell_price > 0),
+    CONSTRAINT cost_price_ck CHECK (cost_price > 0)
+    );
+    
+CREATE TABLE salesman_master(
+    salesman_no VARCHAR2(6),
+    salesman_name VARCHAR2(20) NOT NULL,
+    address1 VARCHAR2(30) NOT NULL,
+    address2 VARCHAR2(30),
+    city VARCHAR2(20),
+    pincode VARCHAR2(6),
+    state VARCHAR2(20),
+    sal_amt NUMBER(8,2) NOT NULL,
+    tgt_to_get NUMBER(6,2) NOT NULL,
+    ytd_sales NUMBER(6,2) NOT NULL,
+    remarks VARCHAR2(60),
+    CONSTRAINT salesman_no_pk PRIMARY KEY(salesman_no), 
+    CONSTRAINT salesman_no_ck CHECK(salesman_no LIKE 'S%'),
+    CONSTRAINT tgt_to_get_ck CHECK(tgt_to_get > 0),
+    CONSTRAINT ytd_sales_ck CHECK(ytd_sales > 0)
+    );
+
+CREATE TABLE sales_order(
+    s_order_no VARCHAR2(6),
+    s_order_date DATE,
+    client_no VARCHAR2(6),
+    dely_addr VARCHAR2(25),
+    salesman_no VARCHAR2(6),
+    dely_type CHAR(1) DEFAULT 'F',
+    billed_yn CHAR(1) DEFAULT 'N',
+    dely_date DATE ,
+    order_status VARCHAR2(10),
+    CONSTRAINT s_order_no_pk PRIMARY KEY(s_order_no), 
+    CONSTRAINT s_order_no_ck CHECK(s_order_no LIKE 'O%'),
+    CONSTRAINT client_no_fk FOREIGN KEY(client_no) REFERENCES client_master(client_no),
+    CONSTRAINT salesman_no_fk FOREIGN KEY(salesman_no) REFERENCES salesman_master(salesman_no),
+    CONSTRAINT dely_type_ck CHECK (dely_type IN ('P','F')),
+    CONSTRAINT billed_yn_ck CHECK (billed_yn IN ('Y','N')),
+    CONSTRAINT dely_date_ck CHECK (dely_date >= s_order_date),
+    CONSTRAINT order_status_ck CHECK (order_status IN ('in_process','fulfilled','back_order','canceled'))
+    );
+
+
+
+CREATE TABLE sales_order_details (
+    s_order_no VARCHAR2(6),
+    product_no VARCHAR2(6),
+    qty_ordered NUMBER(8),
+    qty_disp NUMBER(8),
+    product_rate NUMBER(10,2),
+    CONSTRAINT s_order_no_fk FOREIGN KEY(s_order_no) REFERENCES sales_order(s_order_no),
+    CONSTRAINT product_no_fk FOREIGN KEY(product_no) REFERENCES product_master(product_no) 
+);
+
+CREATE TABLE challan_header (
+    challan_no VARCHAR2(6),
+    s_order_no VARCHAR2(6),
+    challan_date DATE NOT NULL,
+    billed_yn CHAR(1) DEFAULT 'N',
+    CONSTRAINT challan_no_pk PRIMARY KEY(challan_no),
+    CONSTRAINT s_order_no_fk FOREIGN KEY(s_order_no) REFERENCES sales_order(s_order_no),
+    CONSTRAINT challan_no_ck CHECK (challan_no LIKE 'CH%'),
+    CONSTRAINT billed_yn_ck CHECK (billed_yn IN ('Y','N'))
+    
+);
+
+
+INSERT INTO client_master (client_no, name, city, pincode,state,bal_due) VALUES
+('C00001','Ivan Bayross','Bombay',400054,'Maharashtra',15000),
+('C00002','Vandana Saitwal','Madras',780001,'Tamil Nadu',0),
+('C00003','Pramada Jaguste','Bombay',400057,'Maharashtra',5000),
+('C00004','Basu Navindgi','Bombay',400056,'Maharashtra',0),
+('C00005','Ravi Sreedharan','Delhi',100001,'Delhi',2000),
+('C00006','Rukmini','Bombay',400050,'Maharashtra',0);
+
+INSERT INTO product_master VALUES
+('P00001','1.44 Floppies',5,'Piece',100,20,525,500),
+('P03453','Monitors',6,'Piece',10,3,12000,11280),
+('P06734','Mouse',5,'Piece',20,50,1050,1000),
+('P07865','1.22 Floppies',5,'Piece',100,20,525,500),
+('P07868','Keyboards',2,'Piece',10,3,3150,3050),
+('P07885','CD Drive',2.5,'Piece',10,3,5250,5100),
+('P07965','540 HDD',4,'Piece',10,3,8400,8000),
+('P07975','1.44 Drive',5,'Piece',10,3,1050,1000),
+('P08865','1.22 Drive',5,'Piece',2,3,1050,1000);
+
+INSERT INTO salesman_master VALUES
+('S00001','Kiran','A/14','Worli','Bombay',400002,'MAH',3000,100,50,'Good'),
+('S00002','Manish','65','Nariman','Bombay',400001,'MAH',3000,200,100,'Good'),
+('S00003','Ravi','P-7','Bandra','Bombay',400032,'MAH',3000,200,100,'Good'),
+('S00004','Ashish','A/5','Juhu','Bombay',400044,'MAH',3500,200,150,'Good');
+
+INSERT INTO sales_order(s_order_no,s_order_date,client_no,dely_type,billed_yn,salesman_no,dely_date,order_status) VALUES
+('O19001','12-Jan-1996','C00001','F','N','S00001','20-Jan-1996','in process'),
+('O19002','25-Jan-1996','C00002','P','N','S00002','27-Jan-1996','canceled'),
+('O46865','18-Feb-1996','C00003','F','Y','S00003','20-Feb-1996','fullfilled'),
+('O19003','03-Apr-1996','C00001','F','Y','S00001','07-Apr-1996','fullfilled'),
+('O46866','20-May-1996','C00004','P','N','S00002','22-May-1996','canceled'),
+('O10008','24-May-1996','C00005','F','N','S00004','26-May-1996','in process');
+
+INSERT INTO sales_order_details VALUES
+('O19001','P00001',4,4,525),
+('O19001','P07965',2,1,8400),
+('O19001','P07885',2,1,5250),
+('O19002','P00001',10,0,525),
+('O46865','P07868',3,3,3150),
+('O46865','P07885',3,1,5250),
+('O46865','P00001',10,10,525),
+('O46865','P03453',4,4,1050),
+('O19003','P03453',2,2,1050),
+('O19003','P06734',1,1,12000),
+('O46866','P07965',1,0,8400),
+('O46866','P07975',1,0,1050),
+('O19003','P00001',10,4,525),
+('O19003','P07975',5,3,1050);
+
+INSERT INTO challan_header VALUES
+('CH9001','O19001','12-Dec-1995','Y');
+('CH6865','O46865','12-Nov-1995','Y');
+('CH3965','O10008','12-Oct-1995','Y');
+
+INSERT INTO challan_details VALUES
+('CH9001','P00001',4),
+('CH9001','P07965',1),
+('CH9001','P07885',1),
+('CH6865','P07868',3),
+('CH6865','P03453',4),
+('CH6865','P00001',10),
+('CH3965','P00001',5),
+('CH3965','P07975',2);
