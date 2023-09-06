@@ -1,4 +1,4 @@
-
+DROP TABLE client_master;
 CREATE TABLE client_master(
     client_no VARCHAR2(6),
     name VARCHAR2(20) NOT NULL,
@@ -12,6 +12,7 @@ CREATE TABLE client_master(
     CONSTRAINT client_no_ck CHECK (client_no LIKE 'C%')
 );
 
+DROP TABLE product_master;
 CREATE TABLE product_master(
     product_no VARCHAR2(6),
     description VARCHAR2(50) NOT NULL,
@@ -25,7 +26,8 @@ CREATE TABLE product_master(
     CONSTRAINT sell_price_ck CHECK (sell_price > 0),
     CONSTRAINT cost_price_ck CHECK (cost_price > 0)
     );
-    
+
+DROP TABLE salesman_master;
 CREATE TABLE salesman_master(
     salesman_no VARCHAR2(6),
     salesman_name VARCHAR2(20) NOT NULL,
@@ -44,6 +46,7 @@ CREATE TABLE salesman_master(
     CONSTRAINT ytd_sales_ck CHECK(ytd_sales > 0)
     );
 
+DROP TABLE sales_order;
 CREATE TABLE sales_order(
     s_order_no VARCHAR2(6),
     s_order_date DATE,
@@ -61,11 +64,10 @@ CREATE TABLE sales_order(
     CONSTRAINT dely_type_ck CHECK (dely_type IN ('P','F')),
     CONSTRAINT billed_yn_ck CHECK (billed_yn IN ('Y','N')),
     CONSTRAINT dely_date_ck CHECK (dely_date >= s_order_date),
-    CONSTRAINT order_status_ck CHECK (order_status IN ('in_process','fulfilled','back_order','canceled'))
+    CONSTRAINT order_status_ck CHECK (order_status IN ('in process','fulfilled','back_order','canceled'))
     );
 
-
-
+DROP TABLE sales_order_details;
 CREATE TABLE sales_order_details (
     s_order_no VARCHAR2(6),
     product_no VARCHAR2(6),
@@ -76,18 +78,26 @@ CREATE TABLE sales_order_details (
     CONSTRAINT product_no_fk FOREIGN KEY(product_no) REFERENCES product_master(product_no) 
 );
 
+DROP TABLE challan_header;
 CREATE TABLE challan_header (
     challan_no VARCHAR2(6),
     s_order_no VARCHAR2(6),
     challan_date DATE NOT NULL,
     billed_yn CHAR(1) DEFAULT 'N',
     CONSTRAINT challan_no_pk PRIMARY KEY(challan_no),
-    CONSTRAINT s_order_no_fk FOREIGN KEY(s_order_no) REFERENCES sales_order(s_order_no),
+    CONSTRAINT s_order_no_f FOREIGN KEY(s_order_no) REFERENCES sales_order(s_order_no),
     CONSTRAINT challan_no_ck CHECK (challan_no LIKE 'CH%'),
-    CONSTRAINT billed_yn_ck CHECK (billed_yn IN ('Y','N'))
-    
+    CONSTRAINT billed_yn_c CHECK (billed_yn IN ('Y','N'))
 );
 
+DROP TABLE challan_details;
+CREATE TABLE challan_details (
+    challan_no VARCHAR2(6),
+    product_no VARCHAR2(6),
+	qty_disp NUMBER(4,2) NOT NULL,
+    CONSTRAINT challan_no_fk1 foreign KEY(challan_no) REFERENCES challan_header(challan_no),
+    CONSTRAINT PRODUCT_NO_FK1 FOREIGN KEY(product_no) REFERENCES product_master(product_no)
+);
 
 INSERT INTO client_master (client_no, name, city, pincode,state,bal_due) VALUES ('C00001','Ivan Bayross','Bombay',400054,'Maharashtra',15000);
 INSERT INTO client_master (client_no, name, city, pincode,state,bal_due) VALUES ('C00002','Vandana Saitwal','Madras',780001,'Tamil Nadu',0);
@@ -96,15 +106,15 @@ INSERT INTO client_master (client_no, name, city, pincode,state,bal_due) VALUES 
 INSERT INTO client_master (client_no, name, city, pincode,state,bal_due) VALUES ('C00005','Ravi Sreedharan','Delhi',100001,'Delhi',2000);
 INSERT INTO client_master (client_no, name, city, pincode,state,bal_due) VALUES ('C00006','Rukmini','Bombay',400050,'Maharashtra',0);
 
-INSERT INTO product_master VALUES ('P00001','1.44 Floppies',5,'Piece',100,20,525,500);
-INSERT INTO product_master VALUES ('P03453','Monitors',6,'Piece',10,3,12000,11280);
-INSERT INTO product_master VALUES ('P06734','Mouse',5,'Piece',20,50,1050,1000);
-INSERT INTO product_master VALUES ('P07865','1.22 Floppies',5,'Piece',100,20,525,500);
-INSERT INTO product_master VALUES ('P07868','Keyboards',2,'Piece',10,3,3150,3050);
-INSERT INTO product_master VALUES ('P07885','CD Drive',2.5,'Piece',10,3,5250,5100);
-INSERT INTO product_master VALUES ('P07965','540 HDD',4,'Piece',10,3,8400,8000);
-INSERT INTO product_master VALUES ('P07975','1.44 Drive',5,'Piece',10,3,1050,1000);
-INSERT INTO product_master VALUES ('P08865','1.22 Drive',5,'Piece',2,3,1050,1000);
+INSERT INTO product_master VALUES ('P00001','1.44 Floppies',5,'Piece',20,525,500);
+INSERT INTO product_master VALUES ('P03453','Monitors',6,'Piece',3,12000,11280);
+INSERT INTO product_master VALUES ('P06734','Mouse',5,'Piece',50,1050,1000);
+INSERT INTO product_master VALUES ('P07865','1.22 Floppies',5,'Piece',20,525,500);
+INSERT INTO product_master VALUES ('P07868','Keyboards',2,'Piece',3,3150,3050);
+INSERT INTO product_master VALUES ('P07885','CD Drive',2.5,'Piece',3,5250,5100);
+INSERT INTO product_master VALUES ('P07965','540 HDD',4,'Piece',3,8400,8000);
+INSERT INTO product_master VALUES ('P07975','1.44 Drive',5,'Piece',3,1050,1000);
+INSERT INTO product_master VALUES ('P08865','1.22 Drive',5,'Piece',3,1050,1000);
 
 INSERT INTO salesman_master VALUES
 ('S00001','Kiran','A/14','Worli','Bombay',400002,'MAH',3000,100,50,'Good');
@@ -118,9 +128,9 @@ INSERT INTO sales_order(s_order_no,s_order_date,client_no,dely_type,billed_yn,sa
 INSERT INTO sales_order(s_order_no,s_order_date,client_no,dely_type,billed_yn,salesman_no,dely_date,order_status) VALUES
 ('O19002','25-Jan-1996','C00002','P','N','S00002','27-Jan-1996','canceled');
 INSERT INTO sales_order(s_order_no,s_order_date,client_no,dely_type,billed_yn,salesman_no,dely_date,order_status) VALUES
-('O46865','18-Feb-1996','C00003','F','Y','S00003','20-Feb-1996','fullfilled');
+('O46865','18-Feb-1996','C00003','F','Y','S00003','20-Feb-1996','fulfilled');
 INSERT INTO sales_order(s_order_no,s_order_date,client_no,dely_type,billed_yn,salesman_no,dely_date,order_status) VALUES
-('O19003','03-Apr-1996','C00001','F','Y','S00001','07-Apr-1996','fullfilled');
+('O19003','03-Apr-1996','C00001','F','Y','S00001','07-Apr-1996','fulfilled');
 INSERT INTO sales_order(s_order_no,s_order_date,client_no,dely_type,billed_yn,salesman_no,dely_date,order_status) VALUES
 ('O46866','20-May-1996','C00004','P','N','S00002','22-May-1996','canceled');
 INSERT INTO sales_order(s_order_no,s_order_date,client_no,dely_type,billed_yn,salesman_no,dely_date,order_status) VALUES
